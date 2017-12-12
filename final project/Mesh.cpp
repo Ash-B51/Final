@@ -32,7 +32,6 @@ void Mesh::Init(){
 void Mesh::DrawFloor(){
 
 	glBegin(GL_QUADS);
-			glColor3f(0,1.0,0);
 			//v1
 			glNormal3f(0,1.0,0);
 			glVertex3f(-25.0,-3.0,-20.0);
@@ -56,7 +55,6 @@ void Mesh::DrawFloor(){
 void Mesh::DrawLeft(){
 
 	glBegin(GL_QUADS);
-			glColor3f(0,1.0,0);
 			//v1
 			glNormal3f(-1.0,0,0);
 			glVertex3f(-25.0,-3.0,-20.0);
@@ -81,7 +79,6 @@ void Mesh::DrawRight(){
 
 
 	glBegin(GL_QUADS);
-			glColor3f(0,1.0,0);
 			//v1
 			glNormal3f(-1.0,0,0);
 			glVertex3f(75.0,-3.0,-20.0);
