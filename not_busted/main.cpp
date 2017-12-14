@@ -30,8 +30,9 @@ float box1[]={-20,20,10};
 float box2[]={70,5,10};
 
 int score=0;
+int timeLimit=900; //60fpsx30sec=900 counter
 
-char* text;
+char* text,*text1;
 char* c;
 char buf[50];
 
@@ -69,6 +70,12 @@ float boxSize = 1;
 bool boxPick[2] = {false, false};
 bool boxDel = false;
 float* hitBox;
+
+//states
+bool gameStart=false;
+bool gameOver=false;
+
+
 
 float camPos[] = {20.0, 0.6, 87.5};	//where the camera is
 float camTarget[] = { 20.0, 20.0, 0};
@@ -147,13 +154,7 @@ void special(int key, int xIn, int yIn){
 void mouse(int btn, int state, int x, int y){
 	if (btn == GLUT_LEFT_BUTTON){
 		if (state == GLUT_UP){
-			/*
-			boxPick = false;
-			boxDel = false;
-			boxScale = 1;
-			fly = 0;
-			boxAlpha = 1.1;
-			*/
+			gameStart=true;
 		}
 
 		if (state == GLUT_DOWN){
@@ -300,6 +301,17 @@ void init(void)
 //handels displaying text
 void textToScreen(float x,float y,void*font,char *string){
 	char *c;
+	c=string;
+	glLoadIdentity();
+	glRasterPos2f(x,y);
+	for(c=string;*c!='\0';c++){
+		glutBitmapCharacter(font, *c);
+	}
+}
+
+//handels displaying text
+void scoreToScreen(float x,float y,void*font){
+	char *c;
 	sprintf(buf,"Score: %u",score);
 	glLoadIdentity();
 	glRasterPos2f(x,y);
@@ -310,18 +322,55 @@ void textToScreen(float x,float y,void*font,char *string){
 	
 
 }
-/* display function - GLUT display callback function
- *		clears the screen, sets the camera position, draws the mesh
- */
-void display(void){
-    
-    
-	//erase old frame before drawyning new positions 
-	glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+
+//when called in display will show instrunctions to user on how to play
+void gameBootUp(void){
+	
+	//positioning the camera
+    	gluLookAt(	camPos[0], camPos[1], camPos[2], camTarget[0], camTarget[1], camTarget[2], 0.0f, 1.0f,  0.0f);
+
+	
+	//floor and walls 
+	glPushMatrix();
+		float m_dif1[] = {0, 0.5, 0, 1.0};
+		float m_dif2[] = {0, 0, 0.5, 1.0};
+		float m_dif3[] = {0.5, 0, 0, 1.0};
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif1);
+		myMesh->DrawFloor();
+		
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif3);		
+		myMesh->DrawLeft();
+		
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif2);	
+		myMesh->DrawRight();
+	glPopMatrix();
+
+	//instructions for the game
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+		glLoadIdentity();
+		gluOrtho2D(0,1000,1000,0);
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();		
+			//write to screen
+			glPushMatrix();
+				text="Try to hit as many targets as you can within the time limit \0";
+				text1="click anywhere to begin\0";
+				textToScreen(305,250,GLUT_BITMAP_TIMES_ROMAN_24,text);
+				textToScreen(400,298,GLUT_BITMAP_TIMES_ROMAN_24,text1);
+			glPopMatrix();
+			glMatrixMode(GL_PROJECTION);
+			glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
+
+	
 
 
+}
+//when called in display will start moving the cubes and enable partivles
+void gamePlay(void){
 	//box 1 movement 
 	box1[X]+=0.4;
 	min[0][0]+=0.4;
@@ -405,17 +454,23 @@ void display(void){
 		float m_dif2[] = {0, 0, 0.5, 1.0};
 		float m_dif3[] = {0.5, 0, 0, 1.0};
 		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif1);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);
 		myMesh->DrawFloor();
 		
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif3);		
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif3);	
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);	
 		myMesh->DrawLeft();
 		
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif2);	
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif2);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);
 		myMesh->DrawRight();
 	glPopMatrix();
 
-	//HUD Stuff
 
+	//HUD Stuff
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 		glLoadIdentity();
@@ -425,8 +480,7 @@ void display(void){
 		glLoadIdentity();		
 			//write to screen
 			glPushMatrix();
-				text="SCORE: \0";
-				textToScreen(5,20,GLUT_BITMAP_TIMES_ROMAN_24,text);
+				scoreToScreen(417,20,GLUT_BITMAP_TIMES_ROMAN_24);
 			glPopMatrix();
 			glMatrixMode(GL_PROJECTION);
 			glPopMatrix();
@@ -486,20 +540,104 @@ void display(void){
 			
 			fly += 0.5;
 		} else {
+			if(boxPick[0]){
+			//reset effects
 			boxPick[0] = false;
 			boxPick[1] = false;
 			boxDel = false;
 			boxScale = 1.0;
 			fly = 0.0;
 			boxAlpha = 1.1;
+			//reset box position
+			box1[X]=-20;min[0][0]=-23;max[0][0]=-17;
+			}
+			
+			if(boxPick[1]){
+			//reset effects
+			boxPick[0] = false;
+			boxPick[1] = false;
+			boxDel = false;
+			boxScale = 1.0;
+			fly = 0.0;
+			boxAlpha = 1.1;
+			//reset box position
+			box2[X]=70;min[1][0]=67;max[1][0]=73;
+			}
 		}
 	} 
+	timeLimit--;
+	if(timeLimit<0){gameOver=true;gameStart=false;}
 	
+
+}
+
+//when called in display will rese the game
+void gameFinish(void){
+
+	//positioning the camera
+    	gluLookAt(	camPos[0], camPos[1], camPos[2], camTarget[0], camTarget[1], camTarget[2], 0.0f, 1.0f,  0.0f);
+
 	
-	glutSwapBuffers();
+	//floor and walls 
+	glPushMatrix();
+		float m_dif1[] = {0, 0.5, 0, 1.0};
+		float m_dif2[] = {0, 0, 0.5, 1.0};
+		float m_dif3[] = {0.5, 0, 0, 1.0};
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif1);
+		myMesh->DrawFloor();
+		
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif3);		
+		myMesh->DrawLeft();
+		
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif2);	
+		myMesh->DrawRight();
+	glPopMatrix();
+
+	//instructions for the game
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+		glLoadIdentity();
+		gluOrtho2D(0,1000,1000,0);
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();		
+			//write to screen
+			glPushMatrix();
+				text="Game Over\0";
+				textToScreen(410,250,GLUT_BITMAP_TIMES_ROMAN_24,text);
+				scoreToScreen(417,298,GLUT_BITMAP_TIMES_ROMAN_24);
+			glPopMatrix();
+			glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+	
+
+
+	
+
 }
 
 
+
+
+/* display function - GLUT display callback function
+ *		clears the screen, sets the camera position, draws the mesh
+ */
+void display(void){
+	//erases old frame before drawing new one
+	glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	if(!gameStart && !gameOver){gameBootUp();}//will display if game is booted up for the first time
+	if(gameStart && !gameOver){gamePlay();}
+	if(gameOver){gameFinish();}
+
+	//flushes back buffer
+	glutSwapBuffers();
+	
+}  
 
 
 void reshape(int w, int h)
@@ -542,7 +680,7 @@ int main(int argc, char** argv)
 
 
 	
-	glutInitWindowSize(1000, 1000);
+	glutInitWindowSize(2000, 2000);
 	glutInitWindowPosition(50, 50);
 
 	glutCreateWindow("3GC3 Shooting Gallery");	//creates the window
@@ -551,17 +689,18 @@ int main(int argc, char** argv)
 	glEnable( GL_BLEND );
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
-	//display callback
+
+	//display callback states
 	glutDisplayFunc(display);
 
 	//keyboard callback
 	glutKeyboardFunc(keyboard);
 	glutSpecialFunc(special);
     
-    //mouse callback
+   	 //mouse callback
    
 	glutMouseFunc(mouse);
-     glutPassiveMotionFunc(mouseMove);
+     	glutPassiveMotionFunc(mouseMove);
     
 	//resize callback
 	glutReshapeFunc(reshape);
