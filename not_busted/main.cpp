@@ -36,6 +36,7 @@ char* c;
 char buf[50];
 
 bool pick[2] = {false, false};
+
 float posg[] = {0.75,-0.25,6};
 float rotg[] = {0, 0, 0};
 
@@ -58,6 +59,18 @@ float ang;
 float hyp;
 float guna;
 float mov=0;
+
+//particle stuff
+float boxScale = 1;
+float flyOuter = 0;
+float flyMiddle = 0;
+float flyInner = 0;
+float p_pos[][2] = {{1, 1}, {-1, -1}, {-1, 1}, {1, -1}};
+float boxGamma = 0;
+float boxSize = 1;
+bool boxPick[2] = {false, false};
+bool boxDel = false;
+float* hitBox;
 
 float camPos[] = {20.0, 0.6, 87.5};	//where the camera is
 float camTarget[] = { 20.0, 20.0, 0};
@@ -136,6 +149,15 @@ void special(int key, int xIn, int yIn){
 void mouse(int btn, int state, int x, int y){
 	if (btn == GLUT_LEFT_BUTTON){
 		if (state == GLUT_UP){
+			/*
+			boxPick = false;
+			boxDel = false;
+			boxScale = 1;
+			flyOuter = 0;
+			flyMiddle = 0;
+			flyInner = 0;
+			boxGamma = 0;
+			*/
 		}
 
 		if (state == GLUT_DOWN){
@@ -173,7 +195,7 @@ void mouse(int btn, int state, int x, int y){
 			Rd[2] = zDiff / mag;
                         
 
-                        // slab algorith used to select objects. gn is a number that is used to keep track of which
+            // slab algorith used to select objects. gn is a number that is used to keep track of which
 			// object has been selected. pick is a bool used to choose an object.
 			
 			for (b=0;b<2;b++){
@@ -183,6 +205,7 @@ void mouse(int btn, int state, int x, int y){
 					if (Rd[i] == 0.0) {
 						if (R0[i] < min[b][i] or R0[i]> max[b][i]){
 							pick[b] = true;
+							
 							break;
 						}
 					}
@@ -204,12 +227,12 @@ void mouse(int btn, int state, int x, int y){
 						}
 						if (tnear > tfar){
 							pick[b] = true;
-							
+			
 							break;
 						}
 						if (tfar < 0){
 							pick[b] = true;
-							
+
 							break; 
 						}
 					}
@@ -217,10 +240,9 @@ void mouse(int btn, int state, int x, int y){
 					pick[b] = !pick[b];
 					if (pick[b] == true){
 						
-						
+						boxPick[b]=true;
 						score = score +1;
 						pick[b] = false;
-						printf("(%i)\n\n", score);
 						break;
 					}
 				
@@ -303,7 +325,7 @@ void display(void){
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	
+
 	//box 1 movement 
 	box1[X]+=0.4;
 	min[0][0]+=0.4;
@@ -329,53 +351,56 @@ void display(void){
 	float m_difb1[]={1,1,1};
 
 	//box 1 
-	glPushMatrix();
-		glTranslatef(box1[X],box1[Y],box1[Z]);
-
-		//material lighting effects
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);	
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
-
-		//drawing cube in realtion to each other
-		glutSolidCube(6);
+	if (!boxPick[0]){
 		glPushMatrix();
-			glTranslatef(0,0,1.2);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_difb1);
-			glutSolidCube(4);
+			glTranslatef(box1[X],box1[Y],box1[Z]);
+
+			//material lighting effects
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
+
+			//drawing cube in realtion to each other
+			glutSolidCube(6);
 			glPushMatrix();
 				glTranslatef(0,0,1.2);
-				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);			
-				glutSolidCube(2);
-			glPopMatrix();
-		glPopMatrix();		
-	glPopMatrix();
-
+				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_difb1);
+				glutSolidCube(4);
+				glPushMatrix();
+					glTranslatef(0,0,1.2);
+					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);			
+					glutSolidCube(2);
+				glPopMatrix();
+			glPopMatrix();		
+		glPopMatrix();
+	}
+	
 	//box 2
-	glPushMatrix();
-		glTranslatef(box2[X],box2[Y],box2[Z]);
-
-		//material lighting effects
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);	
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
-
-		//drawing cube in realtion to each other
-		glutSolidCube(6);
+	if (!boxPick[1]){
 		glPushMatrix();
-			glTranslatef(0,0,1.2);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_difb1);
-			glutSolidCube(4);
+			glTranslatef(box2[X],box2[Y],box2[Z]);
+
+			//material lighting effects
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);	
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
+
+			//drawing cube in realtion to each other
+			glutSolidCube(6);
 			glPushMatrix();
 				glTranslatef(0,0,1.2);
-				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);			
-				glutSolidCube(2);
-			glPopMatrix();
-		glPopMatrix();		
-	glPopMatrix();
-
+				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_difb1);
+				glutSolidCube(4);
+				glPushMatrix();
+					glTranslatef(0,0,1.2);
+					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);			
+					glutSolidCube(2);
+				glPopMatrix();
+			glPopMatrix();		
+		glPopMatrix();
+	}
 
 
 	//floor and walls 
@@ -413,6 +438,75 @@ void display(void){
 		glPopMatrix();
 
 	glMatrixMode(GL_MODELVIEW);
+
+
+	//particle stuff
+	if (boxPick[0] || boxPick[1]){ // ray pick check
+		if (boxPick[0]){
+			hitBox = box1;
+		} else {
+			hitBox = box2;
+		}
+		if (boxScale > 0){ // stops drawing once box size is > 0
+			boxScale -= 0.06;
+			
+
+			
+			// draws boxes in 4 quadrants at flyOuter; 
+			// outer box
+			for (int i = 0; i < 4; i++){
+				glPushMatrix();
+					//material lighting effects
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
+					glTranslatef(hitBox[X] + (p_pos[i][0] * flyOuter), hitBox[Y] + (p_pos[i][1] * flyOuter), hitBox[Z]);
+					glScalef(boxScale, boxScale, boxScale);
+					glColor3f(0.5, 0.2, 0.2);
+					glRotatef(boxGamma, 0, 0, 1);
+					glutSolidCube(6);
+				glPopMatrix();
+			}
+			
+			// middle box
+			for (int i = 0; i < 4; i++){
+				glPushMatrix();
+					glTranslatef(hitBox[X] + (p_pos[i][0] * flyMiddle), hitBox[Y] + (p_pos[i][1] * flyOuter), hitBox[Z]);
+					glScalef(boxScale, boxScale, boxScale);
+					glRotatef(boxGamma, 0, 0, 1);
+					glColor3f(0.6, 0.6, 0.6);
+					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_difb1);
+					glutSolidCube(4);
+				glPopMatrix();
+			}
+			
+			// inner box
+			for (int i = 0; i < 4; i++){
+				glPushMatrix();
+					glTranslatef(hitBox[X] + (p_pos[i][0] * flyInner), hitBox[Y] + (p_pos[i][1] * flyOuter), hitBox[Z]);
+					glScalef(boxScale, boxScale, boxScale);
+					glRotatef(boxGamma, 0, 0, 1);
+					glColor3f(0.31, 0.06, 0.05);
+					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
+					glutSolidCube(2);
+				glPopMatrix();
+			}
+			
+			flyOuter += 0.7;
+			flyMiddle += 0.6;
+			flyInner += 0.52;
+		} else {
+			boxPick[0] = false;
+			boxPick[1] = false;
+			boxDel = false;
+			boxScale = 1;
+			flyOuter = 0;
+			flyMiddle = 0;
+			flyInner = 0;
+			boxGamma = 0;
+		}
+	} 
 	
 	
 	glutSwapBuffers();
