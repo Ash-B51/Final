@@ -62,11 +62,9 @@ float mov=0;
 
 //particle stuff
 float boxScale = 1;
-float flyOuter = 0;
-float flyMiddle = 0;
-float flyInner = 0;
+float fly = 0;
 float p_pos[][2] = {{1, 1}, {-1, -1}, {-1, 1}, {1, -1}};
-float boxGamma = 0;
+float boxAlpha = 1.1;
 float boxSize = 1;
 bool boxPick[2] = {false, false};
 bool boxDel = false;
@@ -153,10 +151,8 @@ void mouse(int btn, int state, int x, int y){
 			boxPick = false;
 			boxDel = false;
 			boxScale = 1;
-			flyOuter = 0;
-			flyMiddle = 0;
-			flyInner = 0;
-			boxGamma = 0;
+			fly = 0;
+			boxAlpha = 1.1;
 			*/
 		}
 
@@ -265,7 +261,7 @@ void init(void)
 	glEnable(GL_DEPTH_TEST);
 		
 
-	
+
 
 
 	//lighting stuff
@@ -348,7 +344,7 @@ void display(void){
 	float m_amb[] = {0.5f, 0.1f, 0, 1.0};
 	float m_spec[] = {0.1f, 0.1f, 0.1f, 1.0};
 	float shiny = 5; 
-	float m_difb1[]={1,1,1};
+	float m_difb1[]={1,1,1,1};
 
 	//box 1 
 	if (!boxPick[0]){
@@ -448,23 +444,22 @@ void display(void){
 			hitBox = box2;
 		}
 		if (boxScale > 0){ // stops drawing once box size is > 0
-			boxScale -= 0.06;
-			
-
-			
-			// draws boxes in 4 quadrants at flyOuter; 
-			// outer box
-			for (int i = 0; i < 4; i++){
-				glPushMatrix();
-					//material lighting effects
-			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
+			boxScale -= 0.05;
+			boxAlpha -= 0.05;
+			float box_dif[] = {1, 0, 0, boxAlpha};
+			// material lighting effects
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, box_dif);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);
 			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
-					glTranslatef(hitBox[X] + (p_pos[i][0] * flyOuter), hitBox[Y] + (p_pos[i][1] * flyOuter), hitBox[Z]);
+			
+			// draws boxes in 4 quadrants at fly; 
+			// outer box
+			for (int i = 0; i < 4; i++){
+				glPushMatrix();
+					glTranslatef(hitBox[X] + (p_pos[i][0] * fly), hitBox[Y] + (p_pos[i][1] * fly), hitBox[Z]);
 					glScalef(boxScale, boxScale, boxScale);
-					glColor3f(0.5, 0.2, 0.2);
-					glRotatef(boxGamma, 0, 0, 1);
+					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, box_dif);
 					glutSolidCube(6);
 				glPopMatrix();
 			}
@@ -472,11 +467,9 @@ void display(void){
 			// middle box
 			for (int i = 0; i < 4; i++){
 				glPushMatrix();
-					glTranslatef(hitBox[X] + (p_pos[i][0] * flyMiddle), hitBox[Y] + (p_pos[i][1] * flyOuter), hitBox[Z]);
+					glTranslatef(hitBox[X] + (p_pos[i][0] * (fly - 0.1)), hitBox[Y] + (p_pos[i][1] * (fly - 0.1)), hitBox[Z] + (p_pos[i][1] * (fly - 0.05)));
 					glScalef(boxScale, boxScale, boxScale);
-					glRotatef(boxGamma, 0, 0, 1);
-					glColor3f(0.6, 0.6, 0.6);
-					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_difb1);
+					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, box_dif);
 					glutSolidCube(4);
 				glPopMatrix();
 			}
@@ -484,27 +477,21 @@ void display(void){
 			// inner box
 			for (int i = 0; i < 4; i++){
 				glPushMatrix();
-					glTranslatef(hitBox[X] + (p_pos[i][0] * flyInner), hitBox[Y] + (p_pos[i][1] * flyOuter), hitBox[Z]);
+					glTranslatef(hitBox[X] + (p_pos[i][0] * (fly + 0.15)), hitBox[Y] + (p_pos[i][1] * (fly + 0.15)), hitBox[Z] + (p_pos[i][1] * (fly + 0.55)));
 					glScalef(boxScale, boxScale, boxScale);
-					glRotatef(boxGamma, 0, 0, 1);
-					glColor3f(0.31, 0.06, 0.05);
-					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
+					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, box_dif);
 					glutSolidCube(2);
 				glPopMatrix();
 			}
 			
-			flyOuter += 0.7;
-			flyMiddle += 0.6;
-			flyInner += 0.52;
+			fly += 0.5;
 		} else {
 			boxPick[0] = false;
 			boxPick[1] = false;
 			boxDel = false;
-			boxScale = 1;
-			flyOuter = 0;
-			flyMiddle = 0;
-			flyInner = 0;
-			boxGamma = 0;
+			boxScale = 1.0;
+			fly = 0.0;
+			boxAlpha = 1.1;
 		}
 	} 
 	
@@ -553,10 +540,16 @@ int main(int argc, char** argv)
 	glutInit(&argc, argv);		//starts up GLUT
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 
+
+	
 	glutInitWindowSize(1000, 1000);
 	glutInitWindowPosition(50, 50);
 
 	glutCreateWindow("3GC3 Shooting Gallery");	//creates the window
+	
+
+	glEnable( GL_BLEND );
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
 	//display callback
 	glutDisplayFunc(display);
