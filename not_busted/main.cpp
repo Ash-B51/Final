@@ -282,11 +282,10 @@ void init(void)
 //handels displaying text
 void textToScreen(float x,float y,void*font,char *string){
 	char *c;
-	char scorei=(char) score;
-	string=string+(char) score+'\0';
+	sprintf(buf,"Score: %u",score);
 	glLoadIdentity();
 	glRasterPos2f(x,y);
-	for(c=string;*c!='\0';c++){
+	for(c=buf;*c!='\0';c++){
 		glutBitmapCharacter(font, *c);
 	}
 	
@@ -405,9 +404,6 @@ void display(void){
 		glLoadIdentity();		
 			//write to screen
 			glPushMatrix();
-				//come back to this in a bit
-				//int n;
-				//n=sprintf(buf,"Score: %3i",score);
 				text="SCORE: \0";
 				textToScreen(5,20,GLUT_BITMAP_TIMES_ROMAN_24,text);
 			glPopMatrix();
