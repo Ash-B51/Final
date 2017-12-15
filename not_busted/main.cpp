@@ -400,8 +400,8 @@ void gamePlay(void){
 
 	//box 5 movement
 	box5[X]+=0.4;
-	min[3][0]+=0.4;
-	max[3][0]+=0.4;
+	min[4][0]+=0.4;
+	max[4][0]+=0.4;
 	if(box5[X]>85){box5[X]=-20;min[4][0]=-23;max[4][0]=-17;}
 	
 	//positioning the camera
@@ -466,7 +466,7 @@ void gamePlay(void){
 			glPopMatrix();		
 		glPopMatrix();
 	}
-
+	//box 3
 	if (!boxPick[2]){
 		glPushMatrix();
 			glTranslatef(box3[X],box3[Y],box3[Z]);
@@ -491,7 +491,7 @@ void gamePlay(void){
 			glPopMatrix();		
 		glPopMatrix();
 	}
-	
+	//box 4
 	if (!boxPick[3]){
 		glPushMatrix();
 			glTranslatef(box4[X],box4[Y],box4[Z]);
@@ -516,7 +516,7 @@ void gamePlay(void){
 			glPopMatrix();		
 		glPopMatrix();
 	}
-
+	//box5
 	if (!boxPick[4]){
 		glPushMatrix();
 			glTranslatef(box5[X],box5[Y],box5[Z]);
@@ -586,7 +586,7 @@ void gamePlay(void){
 
 
 	//particle stuff
-	if (boxPick[0] || boxPick[1] |boxPick[2]){ // ray pick check
+	if (boxPick[0] || boxPick[1] || boxPick[2] || boxPick[3]|| boxPick[4]){ // ray pick check
 		if (boxPick[0]){
 			hitBox = box1;
 		} 
