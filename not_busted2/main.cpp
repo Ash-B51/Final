@@ -11,8 +11,6 @@
 #  include <GL/glu.h>
 #  include <GL/freeglut.h>
 #endif
-#include <stdio.h>
-#include <stdlib.h>
 
 
 #include "Mesh.h"
@@ -60,15 +58,26 @@ float hyp;
 float guna;
 float mov=0;
 
+bool drawLaser=false;
+int delayLaser=5;
+int lbox;
+
 //particle stuff
 float boxScale = 1;
 float fly = 0;
 float p_pos[][2] = {{1, 1}, {-1, -1}, {-1, 1}, {1, -1}};
 float boxAlpha = 1.1;
 float boxSize = 1;
-bool boxPick[2] = {false, false};
+bool boxPick[5] = {false, false, false, false, false};
 bool boxDel = false;
 float* hitBox;
+
+//texture(s)
+GLubyte* cannon_tex;
+GLuint textures[1];
+int width, height, texmax;
+float verts[8][3] = { {-1,-1,1}, {-1,1,1}, {1,1,1}, {1,-1,1}, {-1,-1,-1}, {-1,1,-1}, {1,1,-1}, {1,-1,-1} };
+float cols[6][3] = { {1,0,0}, {0,1,1}, {1,1,0}, {0,1,0}, {0,0,1}, {1,0,1} };
 
 //states
 bool gameStart=false;
@@ -148,6 +157,131 @@ void special(int key, int xIn, int yIn){
 			camTarget[X] += 0.2f;
 			break;
 	}
+}
+
+/* drawPolygon - (taken from 3GC3 LectureCode6) takes 4 indices and an array of vertices
+ *   and draws a polygon using the vertices indexed by the indices
+ */
+void drawPolygon(int a, int b, int c, int d, float v[8][3]){
+	glBegin(GL_POLYGON);
+
+		glTexCoord2f(0, 0);
+		glVertex3fv(v[a]);
+
+		glTexCoord2f(0, 1);
+		glVertex3fv(v[b]);
+
+		glTexCoord2f(1, 1);
+		glVertex3fv(v[c]);
+
+		glTexCoord2f(1, 0);
+		glVertex3fv(v[d]);
+	glEnd();
+}
+
+/* cube - (taken from 3GC3 LectureCode6) takes an array of 8 vertices, and draws 6 faces
+ *  with drawPolygon, making up a box
+ */
+void cube(float v[8][3])
+{
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glColor3fv(cols[1]);
+	drawPolygon(0, 3, 2, 1, v);
+
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glColor3fv(cols[2]);
+	drawPolygon(1, 0, 4, 5, v);
+
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glColor3fv(cols[3]);
+	drawPolygon(5, 1, 2, 6, v);
+	
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glColor3fv(cols[4]);
+	drawPolygon(2, 3, 7, 6, v);
+	
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glColor3fv(cols[5]);
+	drawPolygon(6, 5, 4, 7, v);
+
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glColor3fv(cols[0]);
+	drawPolygon(4, 0, 3, 7, v);
+}
+
+/* drawBox - (taken from 3GC3 LectureCode6) takes centre point, width, height and depth of a box,
+ *  calculates its corner vertices, and draws it with the cube function
+ */
+void drawBox(float* c, float w, float h, float d, float* rotg)
+{
+	
+	float vertices[8][3] = { {c[0]-w/2 - rotg[1]/50, c[1]-h/2 - rotg[2]/50, c[2]+d/2},
+							 {c[0]-w/2 - rotg[1]/50, c[1]+h/2 - rotg[2]/50, c[2]+d/2},
+							 {c[0]+w/2 - rotg[1]/50, c[1]+h/2 - rotg[2]/50, c[2]+d/2},
+							 {c[0]+w/2 - rotg[1]/50, c[1]-h/2 - rotg[2]/50, c[2]+d/2}, 
+							 {c[0]-w/2 + rotg[1]/50, c[1]-h/2 + rotg[2]/50, c[2]-d/2}, 
+							 {c[0]-w/2 + rotg[1]/50, c[1]+h/2 + rotg[2]/50, c[2]-d/2}, 
+							 {c[0]+w/2 + rotg[1]/50, c[1]+h/2 + rotg[2]/50, c[2]-d/2},
+							 {c[0]+w/2 + rotg[1]/50, c[1]-h/2 + rotg[2]/50, c[2]-d/2}};
+
+	cube(vertices);
+}
+
+/* LoadPPM -- (Taken from 3GC3 LectureCode6) loads the specified ppm file, and returns the image data as a GLubyte 
+ *  (unsigned byte) array. Also returns the width and height of the image, and the
+ *  maximum colour value by way of arguments
+ */
+GLubyte* LoadPPM(char* file, int* width, int* height, int* max)
+{
+	GLubyte* img;
+	FILE *fd;
+	int n, m;
+	int  k, nm;
+	char c;
+	int i;
+	char b[100];
+	float s;
+	int red, green, blue;
+	
+	fd = fopen(file, "r");
+	fscanf(fd,"%[^\n] ",b);
+	if(b[0]!='P'|| b[1] != '3')
+	{
+		printf("%s is not a PPM file!\n",file); 
+		exit(0);
+	}
+	fscanf(fd, "%c",&c);
+	while(c == '#') 
+	{
+		fscanf(fd, "%[^\n] ", b);
+		printf("%s\n",b);
+		fscanf(fd, "%c",&c);
+	}
+	ungetc(c,fd); 
+	fscanf(fd, "%d %d %d", &n, &m, &k);
+
+
+	nm = n*m;
+
+	img = (GLubyte*)malloc(3*sizeof(GLuint)*nm);
+
+
+	s=255.0/k;
+
+
+	for(i=0;i<nm;i++) 
+	{
+		fscanf(fd,"%d %d %d",&red, &green, &blue );
+		img[3*nm-3*i-3]=red*s;
+		img[3*nm-3*i-2]=green*s;
+		img[3*nm-3*i-1]=blue*s;
+	}
+
+	*width = n;
+	*height = m;
+	*max = k;
+
+	return img;
 }
 
 void mouse(int btn, int state, int x, int y){
@@ -235,21 +369,15 @@ void mouse(int btn, int state, int x, int y){
 					}
 					pick[b] = !pick[b];
 					if (pick[b] == true){
-						
+						lbox = b;
 						score = score +1;
+						boxPick[b] = true;
 						pick[b] = false;
 
-						hyp = sqrt((box[b][0]*box[b][0] + 81));
-						
-						oh = box[b][0]/hyp;
-						
-						ang = sin(oh);						
-					
-						guna = -(180* ang)/3.14;
-						
-						
-						rotg[1] = guna;
-						
+						rotg[1] = box[b][0] - 10;
+						rotg[2] = box[b][1] - 10;
+						printf("%.6f", rotg[1], "\n");
+						drawLaser=true;
 						break;
 					}
 				
@@ -302,7 +430,22 @@ void init(void)
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
 	
 
+	//texture stuff
+	glEnable(GL_TEXTURE_2D);
+	glGenTextures(1, textures);
 	
+	//load the texture (cannon)
+	cannon_tex = LoadPPM("cannon.ppm", &width, &height, &texmax);
+
+	//setup second texture (using cannon image)
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	//set texture parameters
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//create a texture using the "tex" array
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, cannon_tex);
 
 	myMesh = new Mesh();
 	myMesh->Init(); 
@@ -424,16 +567,18 @@ void gamePlay(void){
 	float m_difb1[]={1,1,1,1};
 	
 	//this is the cannon
+
 	glPushMatrix();
 		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);
 		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
 
-		glTranslatef(posg[0], posg[1], posg[2]);
-		glRotatef(rotg[1], 0, 1, 0);
 		glColor3f(0,0,1);
-		glutSolidCube(0.5);
+
+		drawBox(posg, 0.5, 0.5, 3, rotg);
+		
+
 	glPopMatrix();
 
 	//box 1 
@@ -669,10 +814,6 @@ void gamePlay(void){
 			if(boxPick[0]){
 			//reset effects
 			boxPick[0] = false;
-			boxDel = false;
-			boxScale = 1.0;
-			fly = 0.0;
-			boxAlpha = 1.1;
 			//reset box position
 			box[0][0]=-20;min[0][0]=-23;max[0][0]=-17;
 			}
@@ -680,10 +821,6 @@ void gamePlay(void){
 			if(boxPick[1]){
 			//reset effects
 			boxPick[1] = false;
-			boxDel = false;
-			boxScale = 1.0;
-			fly = 0.0;
-			boxAlpha = 1.1;
 			//reset box position
 			box[1][0]=70;min[1][0]=67;max[1][0]=73;
 			}
@@ -691,10 +828,6 @@ void gamePlay(void){
 			if(boxPick[2]){
 			//reset effects
 			boxPick[2] = false;
-			boxDel = false;
-			boxScale = 1.0;
-			fly = 0.0;
-			boxAlpha = 1.1;
 			//reset box position
 			box[2][0]=-20;min[2][0]=-23;max[2][0]=17;
 			}
@@ -702,24 +835,20 @@ void gamePlay(void){
 			if(boxPick[3]){
 			//reset effects
 			boxPick[3] = false;
-			boxDel = false;
-			boxScale = 1.0;
-			fly = 0.0;
-			boxAlpha = 1.1;
 			//reset box position
-			box[3][0]=70;min[2][0]=67;max[2][0]=73;
+			box[3][0]=70;min[3][0]=67;max[3][0]=73;
 			}
 
 			if(boxPick[4]){
 			//reset effects
 			boxPick[4] = false;
+			//reset box position
+			box[4][0]=-20;min[4][0]=-23;max[4][0]=17;
+			}
 			boxDel = false;
 			boxScale = 1.0;
 			fly = 0.0;
 			boxAlpha = 1.1;
-			//reset box position
-			box[4][0]=-20;min[2][0]=-23;max[2][0]=17;
-			}
 		}
 	} 
 	timeLimit--;
@@ -727,6 +856,7 @@ void gamePlay(void){
 	
 
 }
+
 
 //when called in display will rese the game
 void gameFinish(void){
@@ -791,6 +921,15 @@ void display(void){
 	if(gameStart && !gameOver){gamePlay();}
 	if(gameOver){gameFinish();}
 
+	if(drawLaser){
+		glBegin(GL_LINES);
+		glColor3f(1,0,0);
+		glVertex3f(box[lbox][0],box[lbox][1],box[lbox][2]);
+		glVertex3f(posg[0], posg[1], posg[2]);
+		glEnd();
+		delayLaser--;
+		if(delayLaser<0){drawLaser=false;delayLaser=5;}			
+	}
 	//flushes back buffer
 	glutSwapBuffers();
 	
@@ -864,7 +1003,6 @@ int main(int argc, char** argv)
 
 	//fps timer callback
 	glutTimerFunc(17, FPSTimer, 0);
-
 	init();
 
 	glutMainLoop();				//starts the event glutMainLoop
