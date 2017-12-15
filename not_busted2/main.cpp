@@ -24,7 +24,7 @@ Mesh *myMesh;
 
 //Globals
 
-float box[5][3]={-20,20,10,70,5,10,-20,5,0,70,25,15,-20,10,20};
+float box[5][3]={-20,20,10,70,5,10,-20,5,0,70,25,15,-20,10,20}; // box1-5 positions
 
 int score=0;
 int timeLimit=900; //60fpsx30sec=900 counter
@@ -35,8 +35,8 @@ char buf[50];
 
 bool pick[5] = {false, false,false,false,false};
 
-float posg[] = {20,0,86};
-float rotg[] = {0, 0, 0};
+float posg[] = {20,0,86}; // gun position
+float rotg[] = {0,0};
 
 double min[5][3] = {-23,17,7,67,2,7,-23,2,-3,67,22,12,-23,7,17};
 double max[5][3] = {-17,23,13,73,8,13,-17,8,3,73,28,18,-17,13,23};
@@ -108,55 +108,11 @@ void keyboard(unsigned char key, int xIn, int yIn)
 			exit(0);
 			break;
 
-		//camera conttrol
-		case 'd':
-			camPos[X] += 0.1f;
-			break;
-
-		case 's':
-			camPos[Z] += 0.1f;
-			break;
-
-		case 'a':
-			camPos[X] -= 0.1f;
-			break;
-		case 'w':
-			camPos[Z]-= 0.1f;
-			break;
-
-
-		//object creation 
-		case 'z':
-			break;
-		case 'x':
-			break;
-		case 'c':
-			break;
-		case 'v':
-			break;
-		
-
 	}
 }
 
 //use  arrows to rotate camera in X-Y axis
 void special(int key, int xIn, int yIn){
-	switch (key){
-		case GLUT_KEY_DOWN:
-			camPos[Y] -= 0.1f;
-			camTarget[Y] += 0.2f;
-			break;
-		case GLUT_KEY_UP:
-			camPos[Y] += 0.1f;
-			camTarget[Y]-= 0.2f;
-			break;
-		case GLUT_KEY_LEFT:
-			camTarget[X] -= 0.2f;
-			break;
-		case GLUT_KEY_RIGHT:
-			camTarget[X] += 0.2f;
-			break;
-	}
 }
 
 /* drawPolygon - (taken from 3GC3 LectureCode6) takes 4 indices and an array of vertices
@@ -209,20 +165,20 @@ void cube(float v[8][3])
 	drawPolygon(4, 0, 3, 7, v);
 }
 
-/* drawBox - (taken from 3GC3 LectureCode6) takes centre point, width, height and depth of a box,
+/* drawBox - (taken from 3GC3 LectureCode6) takes centre point, width, height and depth of a box and rotation,
  *  calculates its corner vertices, and draws it with the cube function
  */
 void drawBox(float* c, float w, float h, float d, float* rotg)
 {
 	
-	float vertices[8][3] = { {c[0]-w/2 - rotg[1]/50, c[1]-h/2 - rotg[2]/50, c[2]+d/2},
-							 {c[0]-w/2 - rotg[1]/50, c[1]+h/2 - rotg[2]/50, c[2]+d/2},
-							 {c[0]+w/2 - rotg[1]/50, c[1]+h/2 - rotg[2]/50, c[2]+d/2},
-							 {c[0]+w/2 - rotg[1]/50, c[1]-h/2 - rotg[2]/50, c[2]+d/2}, 
-							 {c[0]-w/2 + rotg[1]/50, c[1]-h/2 + rotg[2]/50, c[2]-d/2}, 
-							 {c[0]-w/2 + rotg[1]/50, c[1]+h/2 + rotg[2]/50, c[2]-d/2}, 
-							 {c[0]+w/2 + rotg[1]/50, c[1]+h/2 + rotg[2]/50, c[2]-d/2},
-							 {c[0]+w/2 + rotg[1]/50, c[1]-h/2 + rotg[2]/50, c[2]-d/2}};
+	float vertices[8][3] = { {c[0]-w/2 - rotg[0]/50, c[1]-h/2 - rotg[1]/50, c[2]+d/2},
+							 {c[0]-w/2 - rotg[0]/50, c[1]+h/2 - rotg[1]/50, c[2]+d/2},
+							 {c[0]+w/2 - rotg[0]/50, c[1]+h/2 - rotg[1]/50, c[2]+d/2},
+							 {c[0]+w/2 - rotg[0]/50, c[1]-h/2 - rotg[1]/50, c[2]+d/2}, 
+							 {c[0]-w/2 + rotg[0]/50, c[1]-h/2 + rotg[1]/50, c[2]-d/2}, 
+							 {c[0]-w/2 + rotg[0]/50, c[1]+h/2 + rotg[1]/50, c[2]-d/2}, 
+							 {c[0]+w/2 + rotg[0]/50, c[1]+h/2 + rotg[1]/50, c[2]-d/2},
+							 {c[0]+w/2 + rotg[0]/50, c[1]-h/2 + rotg[1]/50, c[2]-d/2}};
 
 	cube(vertices);
 }
@@ -374,9 +330,9 @@ void mouse(int btn, int state, int x, int y){
 						boxPick[b] = true;
 						pick[b] = false;
 
-						rotg[1] = box[b][0] - 10;
-						rotg[2] = box[b][1] - 10;
-						printf("%.6f", rotg[1], "\n");
+						rotg[0] = box[b][0] - 10;
+						rotg[1] = box[b][1] - 10;
+						printf("%.6f", rotg[0], "\n");
 						drawLaser=true;
 						break;
 					}
@@ -388,7 +344,7 @@ void mouse(int btn, int state, int x, int y){
 }
 
 
-//initial call when screes is made
+//initial call when screen is made
 void init(void)
 {
 	glClearColor(0, 0, 0, 0);
@@ -451,7 +407,7 @@ void init(void)
 	myMesh->Init(); 
 }
 
-//handels displaying text
+//handles displaying text
 void textToScreen(float x,float y,void*font,char *string){
 	char *c;
 	c=string;
@@ -462,7 +418,7 @@ void textToScreen(float x,float y,void*font,char *string){
 	}
 }
 
-//handels displaying text
+//handles displaying text
 void scoreToScreen(float x,float y,void*font){
 	char *c;
 	sprintf(buf,"Score: %u",score);
@@ -523,6 +479,7 @@ void gameBootUp(void){
 
 
 }
+
 //when called in display will start moving the cubes and enable partivles
 void gamePlay(void){
 	//box 1 movement 
@@ -633,6 +590,7 @@ void gamePlay(void){
 		glPopMatrix();
 	}
 
+	//box 3
 	if (!boxPick[2]){
 		glPushMatrix();
 			glTranslatef(box[2][0],box[2][1],box[2][2]);
@@ -658,6 +616,7 @@ void gamePlay(void){
 		glPopMatrix();
 	}
 	
+	//box 4
 	if (!boxPick[3]){
 		glPushMatrix();
 			glTranslatef(box[3][0],box[3][1],box[3][2]);
@@ -683,6 +642,7 @@ void gamePlay(void){
 		glPopMatrix();
 	}
 
+	//box 5
 	if (!boxPick[4]){
 		glPushMatrix();
 			glTranslatef(box[4][0],box[4][1],box[4][2]);
@@ -858,7 +818,7 @@ void gamePlay(void){
 }
 
 
-//when called in display will rese the game
+//when called in display will reset the game
 void gameFinish(void){
 
 	//positioning the camera
@@ -898,11 +858,6 @@ void gameFinish(void){
 		glPopMatrix();
 		glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
-	
-
-
-	
-
 }
 
 
@@ -953,6 +908,7 @@ void FPSTimer(int value){ //60fps
 	glutPostRedisplay();
 }
 
+//emulates first person camera movement
 void mouseMove(int x, int y) {
     float xOrigin = 20;
     float yOrigin = 0.6;
