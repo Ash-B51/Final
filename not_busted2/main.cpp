@@ -52,12 +52,6 @@ int i;
 double* m_start = new double[3];
 double* m_end = new double[3];
 
-float oh;
-float ang;
-float hyp;
-float guna;
-float mov=0;
-
 bool drawLaser=false;
 int delayLaser=5;
 int lbox;
