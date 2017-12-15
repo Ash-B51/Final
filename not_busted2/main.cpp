@@ -157,6 +157,8 @@ void cube(float v[8][3])
 	glBindTexture(GL_TEXTURE_2D, textures[0]);
 	glColor3fv(cols[0]);
 	drawPolygon(4, 0, 3, 7, v);
+	
+	
 }
 
 /* drawBox - (taken from 3GC3 LectureCode6) takes centre point, width, height and depth of a box and rotation,
@@ -175,6 +177,7 @@ void drawBox(float* c, float w, float h, float d, float* rotg)
 							 {c[0]+w/2 + rotg[0]/50, c[1]-h/2 + rotg[1]/50, c[2]-d/2}};
 
 	cube(vertices);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 /* LoadPPM -- (Taken from 3GC3 LectureCode6) loads the specified ppm file, and returns the image data as a GLubyte 
@@ -241,97 +244,95 @@ void mouse(int btn, int state, int x, int y){
 		}
 
 		if (state == GLUT_DOWN){
+			if (boxScale == 1){
+				double matModelView[16], matProjection[16]; 
+				int viewport[4]; 
 
-			double matModelView[16], matProjection[16]; 
-			int viewport[4]; 
+				glGetDoublev( GL_MODELVIEW_MATRIX, matModelView ); 
+				glGetDoublev( GL_PROJECTION_MATRIX, matProjection ); 
+				glGetIntegerv( GL_VIEWPORT, viewport ); 
 
-			glGetDoublev( GL_MODELVIEW_MATRIX, matModelView ); 
-			glGetDoublev( GL_PROJECTION_MATRIX, matProjection ); 
-			glGetIntegerv( GL_VIEWPORT, viewport ); 
+				double winX = (double)x; 
+				double winY = viewport[3] - (double)y; 
 
-			double winX = (double)x; 
-			double winY = viewport[3] - (double)y; 
+				gluUnProject(winX, winY, 0.0, matModelView, matProjection, 
+						viewport, &m_start[0], &m_start[1], &m_start[2]); 
 
-			gluUnProject(winX, winY, 0.0, matModelView, matProjection, 
-					viewport, &m_start[0], &m_start[1], &m_start[2]); 
+				gluUnProject(winX, winY, 1.0, matModelView, matProjection, 
+						viewport, &m_end[0], &m_end[1], &m_end[2]); 
 
-			gluUnProject(winX, winY, 1.0, matModelView, matProjection, 
-					viewport, &m_end[0], &m_end[1], &m_end[2]); 
+				double* R0 = new double[3];
+				double* Rd = new double[3];
 
-			double* R0 = new double[3];
-			double* Rd = new double[3];
+				double xDiff = m_end[0] - m_start[0];
+				double yDiff = m_end[1] - m_start[1];
+				double zDiff = m_end[2] - m_start[2];
 
-			double xDiff = m_end[0] - m_start[0];
-			double yDiff = m_end[1] - m_start[1];
-			double zDiff = m_end[2] - m_start[2];
+				double mag = sqrt(xDiff*xDiff + yDiff*yDiff + zDiff*zDiff);
+				R0[0] = m_start[0];
+				R0[1] = m_start[1];
+				R0[2] = m_start[2];
 
-			double mag = sqrt(xDiff*xDiff + yDiff*yDiff + zDiff*zDiff);
-			R0[0] = m_start[0];
-			R0[1] = m_start[1];
-			R0[2] = m_start[2];
-
-			Rd[0] = xDiff / mag;
-			Rd[1] = yDiff / mag;
-			Rd[2] = zDiff / mag;
-                        
-
-            // slab algorith used to select objects. gn is a number that is used to keep track of which
-			// object has been selected. pick is a bool used to choose an object.
-			
-			for (b=0;b<5;b++){
-				tnear = -INFINITY;
-				tfar = INFINITY;
-				for (i=0; i<3; i++){
-					if (Rd[i] == 0.0) {
-						if (R0[i] < min[b][i] or R0[i]> max[b][i]){
-							pick[b] = true;
+				Rd[0] = xDiff / mag;
+				Rd[1] = yDiff / mag;
+				Rd[2] = zDiff / mag;
 							
-							break;
-						}
-					}
-					else{
 
-						t1 = (min[b][i] - R0[i]) / (Rd[i]);
-						t2 = (max[b][i]  - R0[i]) / (Rd[i]);
-						if (t1>t2){
-							d1 = t1;
-							d2 = t2;
-							t1 = d2;
-							t2 = d1;
-						}
-						if (t1>tnear){
-							tnear = t1; 
-						}
-						if (t2<tfar){
-							tfar = t2;
-						}
-						if (tnear > tfar){
-							pick[b] = true;
-			
-							break;
-						}
-						if (tfar < 0){
-							pick[b] = true;
-
-							break; 
-						}
-					}
-					}
-					pick[b] = !pick[b];
-					if (pick[b] == true){
-						lbox = b;
-						score = score +1;
-						boxPick[b] = true;
-						pick[b] = false;
-
-						rotg[0] = box[b][0] - 10;
-						rotg[1] = box[b][1] - 10;
-						printf("%.6f", rotg[0], "\n");
-						drawLaser=true;
-						break;
-					}
+				// slab algorith used to select objects. gn is a number that is used to keep track of which
+				// object has been selected. pick is a bool used to choose an object.
 				
-			
+				for (b=0;b<5;b++){
+					tnear = -INFINITY;
+					tfar = INFINITY;
+					for (i=0; i<3; i++){
+						if (Rd[i] == 0.0) {
+							if (R0[i] < min[b][i] or R0[i]> max[b][i]){
+								pick[b] = true;
+								
+								break;
+							}
+						}
+						else{
+
+							t1 = (min[b][i] - R0[i]) / (Rd[i]);
+							t2 = (max[b][i]  - R0[i]) / (Rd[i]);
+							if (t1>t2){
+								d1 = t1;
+								d2 = t2;
+								t1 = d2;
+								t2 = d1;
+							}
+							if (t1>tnear){
+								tnear = t1; 
+							}
+							if (t2<tfar){
+								tfar = t2;
+							}
+							if (tnear > tfar){
+								pick[b] = true;
+				
+								break;
+							}
+							if (tfar < 0){
+								pick[b] = true;
+
+								break; 
+							}
+						}
+						}
+						pick[b] = !pick[b];
+						if (pick[b] == true){
+							lbox = b;
+							score = score +1;
+							boxPick[b] = true;
+							pick[b] = false;
+
+							rotg[0] = box[b][0] - 10;
+							rotg[1] = box[b][1] - 10;
+							drawLaser=true;
+							break;
+						}
+				}
 			}
 		}
 	}
@@ -396,7 +397,7 @@ void init(void)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//create a texture using the "tex" array
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, cannon_tex);
-
+	glBindTexture(GL_TEXTURE_2D, 0);
 	myMesh = new Mesh();
 	myMesh->Init(); 
 }
@@ -805,6 +806,9 @@ void gamePlay(void){
 			boxAlpha = 1.1;
 		}
 	} 
+	
+	glBindTexture(GL_TEXTURE_2D, 0);
+	
 	timeLimit--;
 	if(timeLimit<0){gameOver=true;gameStart=false;}
 	
