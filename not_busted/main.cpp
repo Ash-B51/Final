@@ -28,6 +28,9 @@ Mesh *myMesh;
 
 float box1[]={-20,20,10};
 float box2[]={70,5,10};
+float box3[]={-20,5,0};
+float box4[]={70,25,15};
+float box5[]={-20,10,20};
 
 int score=0;
 int timeLimit=900; //60fpsx30sec=900 counter
@@ -36,13 +39,13 @@ char* text,*text1;
 char* c;
 char buf[50];
 
-bool pick[2] = {false, false};
+bool pick[5] = {false, false,false,false,false};
 
 float posg[] = {0.75,-0.25,6};
 float rotg[] = {0, 0, 0};
 
-double min[2][3] = {-23,17,7,67,2,7};
-double max[2][3] = {-17,23,13,73,8,13};
+double min[5][3] = {-23,17,7,67,2,7,-23,2,-3,67,22,12,-23,7,17};
+double max[5][3] = {-17,23,13,73,8,13,-17,8,3,73,28,18,-17,13,23};
 
 double tnear;
 double tfar;
@@ -195,7 +198,7 @@ void mouse(int btn, int state, int x, int y){
             // slab algorith used to select objects. gn is a number that is used to keep track of which
 			// object has been selected. pick is a bool used to choose an object.
 			
-			for (b=0;b<2;b++){
+			for (b=0;b<5;b++){
 				tnear = -INFINITY;
 				tfar = INFINITY;
 				for (i=0; i<3; i++){
@@ -372,17 +375,34 @@ void gameBootUp(void){
 //when called in display will start moving the cubes and enable partivles
 void gamePlay(void){
 	//box 1 movement 
-	box1[X]+=0.4;
-	min[0][0]+=0.4;
-	max[0][0]+=0.4;
+	box1[X]+=0.7;
+	min[0][0]+=0.7;
+	max[0][0]+=0.7;
 	if(box1[X]>85){box1[X]=-20;min[0][0]=-23;max[0][0]=-17;}
 
 	//box 2 movement
-	box2[X]-=0.4;
-	min[1][0]-=0.4;
-	max[1][0]-=0.4;
+	box2[X]-=0.3;
+	min[1][0]-=0.3;
+	max[1][0]-=0.3;
 	if(box2[X]<-30){box2[X]=70;min[1][0]=67;max[1][0]=73;}
 
+	//box 3 movement
+	box3[X]+=0.5;
+	min[2][0]+=0.5;
+	max[2][0]+=0.5;
+	if(box3[X]>85){box3[X]=-20;min[2][0]=-23;max[2][0]=-17;}
+
+	//box 4 movement
+	box4[X]-=0.6;
+	min[3][0]-=0.6;
+	max[3][0]-=0.6;
+	if(box4[X]<-30){box4[X]=70;min[3][0]=67;max[3][0]=73;}
+
+	//box 5 movement
+	box5[X]+=0.4;
+	min[3][0]+=0.4;
+	max[3][0]+=0.4;
+	if(box5[X]>85){box5[X]=-20;min[4][0]=-23;max[4][0]=-17;}
 	
 	//positioning the camera
     gluLookAt(	camPos[0], camPos[1], camPos[2], camTarget[0], camTarget[1], camTarget[2], 0.0f, 1.0f,  0.0f);
@@ -425,6 +445,81 @@ void gamePlay(void){
 	if (!boxPick[1]){
 		glPushMatrix();
 			glTranslatef(box2[X],box2[Y],box2[Z]);
+
+			//material lighting effects
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);	
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
+
+			//drawing cube in realtion to each other
+			glutSolidCube(6);
+			glPushMatrix();
+				glTranslatef(0,0,1.2);
+				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_difb1);
+				glutSolidCube(4);
+				glPushMatrix();
+					glTranslatef(0,0,1.2);
+					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);			
+					glutSolidCube(2);
+				glPopMatrix();
+			glPopMatrix();		
+		glPopMatrix();
+	}
+
+	if (!boxPick[2]){
+		glPushMatrix();
+			glTranslatef(box3[X],box3[Y],box3[Z]);
+
+			//material lighting effects
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);	
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
+
+			//drawing cube in realtion to each other
+			glutSolidCube(6);
+			glPushMatrix();
+				glTranslatef(0,0,1.2);
+				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_difb1);
+				glutSolidCube(4);
+				glPushMatrix();
+					glTranslatef(0,0,1.2);
+					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);			
+					glutSolidCube(2);
+				glPopMatrix();
+			glPopMatrix();		
+		glPopMatrix();
+	}
+	
+	if (!boxPick[3]){
+		glPushMatrix();
+			glTranslatef(box4[X],box4[Y],box4[Z]);
+
+			//material lighting effects
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spec);	
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_amb);
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
+
+			//drawing cube in realtion to each other
+			glutSolidCube(6);
+			glPushMatrix();
+				glTranslatef(0,0,1.2);
+				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_difb1);
+				glutSolidCube(4);
+				glPushMatrix();
+					glTranslatef(0,0,1.2);
+					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);			
+					glutSolidCube(2);
+				glPopMatrix();
+			glPopMatrix();		
+		glPopMatrix();
+	}
+
+	if (!boxPick[4]){
+		glPushMatrix();
+			glTranslatef(box5[X],box5[Y],box5[Z]);
 
 			//material lighting effects
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
@@ -491,11 +586,21 @@ void gamePlay(void){
 
 
 	//particle stuff
-	if (boxPick[0] || boxPick[1]){ // ray pick check
+	if (boxPick[0] || boxPick[1] |boxPick[2]){ // ray pick check
 		if (boxPick[0]){
 			hitBox = box1;
-		} else {
+		} 
+		else if(boxPick[1]) {
 			hitBox = box2;
+		}
+		else if(boxPick[2]) {
+			hitBox = box3;
+		}
+		else if(boxPick[3]) {
+			hitBox = box4;
+		}
+		else if(boxPick[4]) {
+			hitBox = box5;
 		}
 		if (boxScale > 0){ // stops drawing once box size is > 0
 			boxScale -= 0.05;
@@ -543,7 +648,6 @@ void gamePlay(void){
 			if(boxPick[0]){
 			//reset effects
 			boxPick[0] = false;
-			boxPick[1] = false;
 			boxDel = false;
 			boxScale = 1.0;
 			fly = 0.0;
@@ -554,7 +658,6 @@ void gamePlay(void){
 			
 			if(boxPick[1]){
 			//reset effects
-			boxPick[0] = false;
 			boxPick[1] = false;
 			boxDel = false;
 			boxScale = 1.0;
@@ -562,6 +665,39 @@ void gamePlay(void){
 			boxAlpha = 1.1;
 			//reset box position
 			box2[X]=70;min[1][0]=67;max[1][0]=73;
+			}
+			
+			if(boxPick[2]){
+			//reset effects
+			boxPick[2] = false;
+			boxDel = false;
+			boxScale = 1.0;
+			fly = 0.0;
+			boxAlpha = 1.1;
+			//reset box position
+			box3[X]=-20;min[2][0]=-23;max[2][0]=17;
+			}
+
+			if(boxPick[3]){
+			//reset effects
+			boxPick[3] = false;
+			boxDel = false;
+			boxScale = 1.0;
+			fly = 0.0;
+			boxAlpha = 1.1;
+			//reset box position
+			box4[X]=70;min[2][0]=67;max[2][0]=73;
+			}
+
+			if(boxPick[4]){
+			//reset effects
+			boxPick[4] = false;
+			boxDel = false;
+			boxScale = 1.0;
+			fly = 0.0;
+			boxAlpha = 1.1;
+			//reset box position
+			box5[X]=-20;min[2][0]=-23;max[2][0]=17;
 			}
 		}
 	} 
