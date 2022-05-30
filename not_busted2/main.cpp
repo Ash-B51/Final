@@ -27,7 +27,7 @@ Mesh *myMesh;
 float box[5][3]={-20,20,10,70,5,10,-20,5,0,70,25,15,-20,10,20}; // box1-5 positions
 
 int score=0;
-int timeLimit=900; //60fpsx30sec=900 counter
+int timeLimit=900; //60fpsx30sec=900 counter test commit stuff
 
 char* text,*text1;
 char* c;
